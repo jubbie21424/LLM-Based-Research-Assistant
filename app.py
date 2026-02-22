@@ -66,6 +66,46 @@ def is_gibberish_industry(industry: str) -> bool:
         return True
     return re.search(r"[A-Za-z\u4e00-\u9fff]", s) is None
 
+def validate_is_industry_llm(user_input: str, api_key: str) -> bool:
+    """
+    Strictly validates if the input is a business industry, sector, or market.
+    Rejects names of people, specific products (food/gadgets), 
+    locations, or non-commercial topics.
+    """
+    try:
+        checker_llm = ChatGoogleGenerativeAI(
+            model="gemini-2.5-flash", 
+            google_api_key=api_key,
+            temperature=0.0
+        )
+        
+        # Refined prompt for business context
+        system_instruction = (
+        "You are a strict Business Classification Guard. Your ONLY job is to filter out inputs that are NOT general business industries.\n\n"
+            "STRICT RULES:\n"
+            "1. REJECT (Answer 'No'):\n"
+            "   - Specific people (e.g., Elon Musk, Jay Chou, Taylor Swift)\n"
+            "   - Specific products or brands (e.g., iPhone, Big Mac, Coca-Cola)\n"
+            "   - Specific locations/addresses (e.g., London, No. 10 Downing St, Taiwan)\n"
+            "   - Movies, songs, or fictional characters.\n"
+            "   - Anything that is a single object (e.g., Apple, Pizza, Car).\n"
+            "2. ACCEPT (Answer 'Yes'):\n"
+            "   - Broad economic sectors (e.g., Automotive Industry, Semiconductor, Fast Food Sector, Healthcare).\n\n"
+            "If the input is borderline, favor 'No'. Answer ONLY 'Yes' or 'No'."
+        )
+        
+        user_msg = f"Term: {user_input}\nIs this a business industry? Answer 'Yes' or 'No' only."
+        
+        # Combine for the call
+        response = checker_llm.invoke([
+            SystemMessage(content=system_instruction),
+            HumanMessage(content=user_msg)
+        ])
+        
+        return "yes" in response.content.strip().lower()
+    except Exception:
+        # Fallback to True to ensure app doesn't crash
+        return True
 # =============================================================================
 # Q1: TEXT & INPUTS
 # =============================================================================
@@ -103,17 +143,23 @@ with col2:
 if search_clicked:
     industry_clean = (industry or "").strip()
 
+    # Step 1: Basic empty check
     if industry_clean == "":
         st.warning("⚠️ The industry has not been provided. Please update.")
         st.stop()
 
-    # Intercept gibberish / random input using helper
+    # Step 2: Basic regex gibberish check (Fast local validation to prevent unnecessary API calls and token usage)
     if is_gibberish_industry(industry_clean):
-        st.warning("⚠️ Invalid industry input (looks like random characters).")
+        st.warning("⚠️ Invalid industry input (contains no letters or CJK characters).")
         st.stop()
 
-    st.success(f"You are searching: **{industry_clean}**")
+    # Step 3: Semantic validation via LLM (intercepting nonsense like 'jfepwfjwpwv')
+    with st.spinner("Validating business context..."):
+        if not validate_is_industry_llm(industry_clean, api_key):
+            st.error(f"❌ '{industry_clean}' is not a recognized industry. Please enter a sector like 'Fintech' or 'Tourism'.")
+            st.stop()
 
+    st.success(f"Verified Industry: **{industry_clean}**")
     # =============================================================================
     # Q2: Return URL
     # =============================================================================
