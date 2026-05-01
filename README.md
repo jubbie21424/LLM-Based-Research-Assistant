@@ -53,4 +53,4 @@ This is an individual assignment for MSIN0231 Machine Learning for Business. The
 - `README.md`: This file.
 
 ## License
-This project is for educational purposes as part of MSIN0231 coursework.
+No license required
