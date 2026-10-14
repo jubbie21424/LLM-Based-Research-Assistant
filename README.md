@@ -1,7 +1,7 @@
 # LLM-Based Research Assistant
 
 ## Overview
-This is an individual assignment for MSIN0231 Machine Learning for Business. The project implements a web-based research assistant using Large Language Models (LLMs) to help users with research tasks. It leverages Google Gemini 2.5 Flash for natural language processing and Wikipedia as a knowledge source for retrieving relevant information.
+The project implements a web-based research assistant using Large Language Models (LLMs) to help users with research tasks. It leverages Google Gemini 2.5 Flash for natural language processing and Wikipedia as a knowledge source for retrieving relevant information.
 
 ## Features
 - **Interactive Web Interface**: Built with Streamlit for an easy-to-use web application.
